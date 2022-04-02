@@ -6,7 +6,6 @@ import numpy as np
 from PIL import Image, ImageDraw
 import matplotlib.pyplot as plt
 import cv2 as cv
-
 import multiprocessing
 
 class RectangleRegion:
@@ -33,7 +32,7 @@ class RectangleRegion:
         y1 = int(self.y * scale)
         x2 = x1 + int(self.width * scale) - 1
         y2 = y1 + int(self.height * scale) - 1
-
+        
         S = int(ii[x2, y2])
         if x1 > 0: S -= int(ii[x1-1, y2])
         if y1 > 0: S -= int(ii[x2, y1-1])
@@ -56,25 +55,16 @@ class HaarFeature:
 
 
 def integral_image(img):
-    """
-    Optimized version of Summed-area table
-    ii(-1, y) = 0
-    s(x, -1) = 0
-    s(x, y) = s(x, y-1) + i(x, y)  # Sum of column X at level Y
-    ii(x, y) = ii(x-1, y) + s(x, y)  # II at (X-1,Y) + Column X at Y
-    """
-    h, w = img.shape
-
     s = np.zeros(img.shape, dtype=np.uint32)
     ii = np.zeros(img.shape, dtype=np.uint32)
 
-    for x in range(0, w):
-        for y in range(0, h):
+    for x in range(0, 19):
+        for y in range(0, 19):
             s[y][x] = s[y - 1][x] + img[y][x] if y - 1 >= 0 else img[y][x]
             ii[y][x] = ii[y][x - 1] + s[y][x] if x - 1 >= 0 else s[y][x]
     return ii
 
-def build_features(img_w, img_h, shift=1, scale_factor=1.25, min_w=4, min_h=4):
+def build_features(img_w = 19, img_h = 19, shift=1, scale_factor=1.25, min_w=4, min_h=4):
     """
     Generate values from Haar features
     White rectangles substract from black ones
@@ -133,15 +123,15 @@ def apply_features(X_ii, features):
     X = np.zeros((len(features), len(X_ii)), dtype=np.int32)
     # 'y' will be kept as it is => f0=([...], y); f1=([...], y),...
 
-    bar = Bar('Processing features', max=len(features), suffix='%(percent)d%% - %(elapsed_td)s - %(eta_td)s')
-    for j, feature in bar.iter(enumerate(features)):
+    #bar = Bar('Processing features', max=len(features), suffix='%(percent)d%% - %(elapsed_td)s - %(eta_td)s')
+    for j, feature in enumerate(features):
     # for j, feature in enumerate(features):
     #     if (j + 1) % 1000 == 0 and j != 0:
     #         print("Applying features... ({}/{})".format(j + 1, len(features)))
 
         # Compute the value of feature 'j' for each image in the training set (Input of the classifier_j)
         X[j] = list(map(lambda ii: feature.compute_value(ii), X_ii))
-    bar.finish()
+    #bar.finish()
 
     return X
 

@@ -42,20 +42,29 @@ path_noface = path + "/face.test/non-face/"
 X = []
 y = []
 
-
+features = build_features()
 try:
     for img in os.listdir(path_face):
         img_path = f"{path_face}{img}"
-        X.append(cv.imread(img_path))
+        pixel = cv.imread(img_path)
+        gray = cv.cvtColor(pixel, cv.COLOR_BGR2GRAY) #19 x 19
+        x_ii = integral_image(gray)
+        x_ii_haar = apply_features(x_ii, features)
+        X.append(x_ii_haar)
         y.append(1)
         break
         
 
     for img in os.listdir(path_noface):
         img_path = f"{path_noface}{img}"
-        X.append(cv.imread(img_path))
+        pixel = cv.imread(img_path)
+        gray = cv.cvtColor(pixel, cv.COLOR_BGR2GRAY)
+        x_ii = integral_image(gray)
+        x_ii_haar = apply_features(x_ii, features)
+        X.append(x_ii_haar)
         y.append(-1)
         break
+
     
 except FileNotFoundError:
     print("Unable to locate files...")
